@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Optic visual checks</title>
+<style>body{margin:0;background:#222;color:#fff;font:14px Arial}canvas{width:100vw;height:100vh;display:block}nav{position:fixed;top:20px;left:20px}button{padding:12px;cursor:pointer}span{margin-left:15px}</style>
+<canvas id="game"></canvas><nav><button data-mode="idle">ADS / rested</button> <button data-mode="recoil">ADS / recoil</button> <button data-mode="sway">ADS / eye offset</button> <button data-mode="hip">Hip view</button><button data-mode="single">Single shot</button> <button data-mode="burst">10-round burst</button><span id="status">ADS / rested</span></nav>
+<script src="../src/math.js"></script><script src="../src/renderer.js"></script><script src="../src/player.js"></script><script src="../src/range.js"></script><script src="../src/rifle-model.js"></script><script src="../src/weapon.js"></script>
+<script>
+const r = new BD.Renderer(document.getElementById('game'));
+const p = new BD.Player(), range = new BD.Range();
+const w = new BD.Weapon({ shot() {}, reload() {} }, () => {});
+p.pos.x = -2;
+let animation = null;
+function render() {
+  r.begin(p.pos, 0, w.camera.x, BD.mix(90, 70, w.ads));
+  range.draw(r);
+  w.draw(r, p);
+}
+function select(mode) {
+  animation = null;
+  w.resetRecoil();
+  w.ammo = 30;
+  w.nextShot = w.bufferUntil = w.reloadLeft = w.flash = 0;
+  w.held = false;
+  w.ads = mode === 'hip' ? 0 : 1;
+  w.aiming = w.ads === 1;
+  p.swayX = mode === 'sway' ? .04 : 0;
+  p.swayY = mode === 'sway' ? -.02 : 0;
+  if (mode === 'recoil') {
+    w.fire(0);
+    w.update(.0625, .0625, false);
+  }
+  if (mode === 'single' || mode === 'burst') {
+    w.trigger(0);
+    w.held = mode === 'burst';
+    animation = { start: performance.now(), previous: 0, burst: mode === 'burst' };
+  }
+  render();
+}
+function animate(time) {
+  if (animation) {
+    const elapsed = (time - animation.start) / 1000;
+    if (elapsed >= 0) {
+      if (animation.burst && elapsed >= .95) w.held = false;
+      w.update(elapsed - animation.previous, elapsed, false);
+      animation.previous = elapsed;
+      document.getElementById('status').textContent = w.shots + ' total shots / recoil ' + (w.borePitch.x * 180 / Math.PI).toFixed(3) + '°';
+      render();
+      if (elapsed > 1.8) animation = null;
+    }
+  }
+  requestAnimationFrame(animate);
+}
+document.querySelectorAll('button').forEach(button => button.onclick = () => {
+  select(button.dataset.mode);
+  document.getElementById('status').textContent = button.textContent;
+});
+select('idle');
+requestAnimationFrame(animate);
+</script></html>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bean Duty / Nuketown</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Playable Nuketown 4v4 team deathmatch"></canvas>
+  <header><a href="bean-duty.html">BD<span> / BEAN DUTY</span></a><div>NUKETOWN <i></i> <span>4V4 / TDM</span></div></header>
+  <div id="range-label"><span>TEAM DEATHMATCH</span><strong>NUKETOWN</strong><small>BLUE = ALLIES · RED = ENEMIES</small></div>
+  <div id="crosshair"><b></b><b></b><b></b><b></b></div><div id="hitmarker">×</div>
+  <div id="notification" aria-live="polite"></div>
+  <aside id="telemetry"><span>YOUR STATS</span><div><b id="hits">0</b> HITS</div><div><b id="accuracy">—</b> ACCURACY</div><div><b id="kills">0</b> ELIMINATIONS</div></aside>
+  <footer><div><span id="stance">STANDING</span><small>WASD Move · SHIFT Sprint · SPACE Jump · C Crouch</small></div><div id="weapon-info"><span>AR–01 <small> / 600 RPM / AUTO</small></span><div><b id="ammo">30</b><em> / ∞</em></div><small id="weapon-state">5.56 × 45 MM &nbsp; · &nbsp; R RELOAD</small></div></footer>
+  <div id="scoreboard"><span class="blue">BLUE <b id="blue-score">0</b></span><small>4 vs 4<br>FIRST TO 30</small><span class="red"><b id="red-score">0</b> RED</span></div><div id="health-panel">HEALTH <b id="health">100</b><div><i id="health-bar"></i></div></div><div id="feed"></div><div id="damage"></div><div id="respawn" hidden></div>
+  <section id="menu">
+    <div class="panel"><div class="eyebrow">BEAN DUTY &nbsp; / &nbsp; PROTOTYPE 001</div><h1 id="menu-title">OWN THE<br><em>STREET.</em></h1><p id="menu-copy">4 vs 4 · First team to 30 eliminations.</p><div id="results" hidden></div><div class="rule"></div><div class="controls"><span><kbd>W A S D</kbd> Move</span><span><kbd>LMB</kbd> Fire</span><span><kbd>RMB</kbd> Aim</span><span><kbd>R</kbd> Reload</span><span><kbd>SHIFT</kbd> Sprint</span><span><kbd>ESC</kbd> Pause</span></div><button id="start">START MATCH <span>↗</span></button><div class="settings"><label>Sensitivity <input id="sensitivity" type="range" min="0.5" max="2" step="0.1" value="1"></label><label>Volume <input id="volume" type="range" min="0" max="1" step="0.05" value="0.5"></label></div><button id="reset" class="secondary">RESTART MATCH</button><small id="hint">DESKTOP · MOUSE + KEYBOARD · HEADPHONES RECOMMENDED</small></div>
+    <div class="range-note"><span>OFFLINE / BOT MATCH</span><strong>Learn the lanes.<br>Own the street.</strong><small>YOU + 3 ALLIED BOTS vs 4 ENEMY BOTS<br>Automatic respawns · First to 30 wins<br>Friendly fire off · Health regenerates after 5s</small></div>
+  </section>
+  <script src="src/math.js"></script><script src="src/renderer.js"></script><script src="src/audio.js"></script><script src="src/player.js"></script><script src="src/range.js"></script><script src="src/rifle-model.js"></script><script src="src/weapon.js"></script><script src="src/match.js"></script><script src="src/game.js"></script>
+</body></html>
+
