@@ -8,7 +8,7 @@ BD.RIFLE_RECOIL = Object.freeze({
   yawFrequency: 18,
   yawImpulse: .006,
   cameraFrequency: 18,
-  cameraImpulse: .018,
+  cameraImpulse: .055,
   kickFrequency: 28,
   kickImpulse: .45,
   rollFrequency: 22,
@@ -69,7 +69,7 @@ BD.Weapon = class {
     if (this.reloadLeft > 0 || this.ammo === 30) return;
     this.reloadLeft = 1.55;
     this.bufferUntil = 0;
-    this.audio.reload();
+    this.audio.reload(0);
   }
 
   resetRecoil() {
@@ -100,11 +100,11 @@ BD.Weapon = class {
     this.ads = BD.clamp(this.ads + (aim ? 1 : -1) * dt / .165, 0, 1);
     this.flash = Math.max(0, this.flash - dt);
     if (this.reloadLeft > 0) {
-      this.reloadLeft -= dt;
+      const before=1.55-this.reloadLeft;this.reloadLeft -= dt;const after=1.55-this.reloadLeft;for(const [stage,at] of [[1,.75],[2,1.2]])if(before<at&&after>=at)this.audio.reload(stage);
       if (this.reloadLeft <= 0) {
         this.reloadLeft = 0;
         this.ammo = 30;
-        this.audio.reload();
+
       }
     } else if (!sprint) {
       // Integrate at each shot deadline, then at the render time. Advancing the
@@ -123,12 +123,13 @@ BD.Weapon = class {
     const ads = this.ads * this.ads * (3 - 2 * this.ads);
     const bob = .009 * Math.min(player.speed / 4.5, 1) * (1 - ads * .9);
     const reload = this.reloadLeft > 0 ? Math.sin(this.reloadLeft / 1.55 * Math.PI) : 0;
+    const sprint=(player.sprintBlend||0)*(1-ads),lean=(player.strafeLean||0)*(1-ads*.8);
     const base = BD.mat.transform(
-      BD.mix(.23, 0, ads) - player.swayX * (1 - ads * .65) + Math.sin(player.bob) * bob,
-      BD.mix(-.25, -.18, ads) + player.swayY * (1 - ads * .65) + Math.sin(player.bob * 2) * bob * .6 - reload * .3,
+      BD.mix(.23, 0, ads) - player.swayX * (1 - ads * .65) + Math.sin(player.bob) * bob - lean*.6,
+      BD.mix(-.25, -.18, ads) + player.swayY * (1 - ads * .65) + Math.sin(player.bob * 2) * bob * .6 - reload * .3 - sprint*.09 + (player.landing?.x||0)*.5,
       -.55 + this.kick.x + reload * .12,
-      1, 1, 1, reload * .6, 0,
-      this.roll.x - player.swayX * 1.2 + reload * .3
+      1, 1, 1, reload * .6 - sprint*.25, sprint*.2,
+      this.roll.x - player.swayX * 1.2 + reload * .3 + lean + sprint*.2
     );
     // Rotate the entire assembly around a shoulder-side pivot. The optic rises
     // with the receiver instead of the dot sliding up a nearly stationary hood.
@@ -157,11 +158,25 @@ BD.Weapon = class {
     };
   }
 
+  view(player) {
+    const motion=player.cameraMotion;
+    return {
+      pitch:BD.clamp(player.pitch+this.camera.x+(motion?.pitch??0),-1.5,1.5),
+      yaw:player.yaw,
+      // A small shoulder twist and lens pulse make bursts felt without shake.
+      roll:(motion?.roll??0)+this.roll.x*.65*(1-.65*this.ads),
+      fov:BD.mix(90,70,this.ads)+((motion?.fov??0)+this.camera.x*65)*(1-this.ads)
+    };
+  }
+
   shotDirection(player, random = Math.random) {
     const aim = this.localAim(player);
     const spread = (1 - this.ads) * (.003 + player.speed * .0015);
     const local = { x: aim.x + (random() - .5) * spread, y: aim.y + (random() - .5) * spread, z: aim.z };
-    const pitch = BD.clamp(player.pitch + this.camera.x, -1.5, 1.5);
+    const {pitch,roll} = this.view(player);
+    const rolledX=local.x*Math.cos(roll)-local.y*Math.sin(roll);
+    local.y=local.x*Math.sin(roll)+local.y*Math.cos(roll);
+    local.x=rolledX;
     // Inverse camera view rotation; no duplicated pitch approximation.
     const y = local.y * Math.cos(pitch) - local.z * Math.sin(pitch);
     const z = local.y * Math.sin(pitch) + local.z * Math.cos(pitch);
@@ -173,15 +188,17 @@ BD.Weapon = class {
 
   screenAim(player, aspect) {
     const aim = this.localAim(player);
-    const focal = 1 / Math.tan(BD.mix(90, 70, this.ads) * Math.PI / 360);
+    const focal = 1 / Math.tan(this.fov(player) * Math.PI / 360);
     return {
       x: .5 - aim.x / aim.z * focal / aspect * .5,
       y: .5 + aim.y / aim.z * focal * .5
     };
   }
 
+  fov(player) { return this.view(player).fov; }
+
   draw(renderer, player) {
     renderer.viewmodel();
-    BD.RifleModel.draw(renderer, this.pose(player), this.flash);
+    BD.RifleModel.draw(renderer, this.pose(player), this.flash, this.reloadLeft>0?(1.55-this.reloadLeft)/1.55:0);
   }
 };

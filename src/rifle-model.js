@@ -8,7 +8,7 @@ BD.RifleModel = {
     return { x: 0, y: this.lens.y, z: this.lens.z + .00045 };
   },
 
-  draw(renderer, pose, flash) {
+  draw(renderer, pose, flash, reload=0) {
     const gl = renderer.gl;
     const graphite = [.24, .27, .28], metal = [.38, .41, .4], black = [.12, .15, .16];
     const tan = [.43, .44, .35];
@@ -34,11 +34,13 @@ BD.RifleModel = {
     box(.044, .006, -.035, .004, .032, .08, black);
     box(.047, -.002, .023, .008, .012, .018, metal);
     box(-.047, -.009, .045, .014, .009, .028, metal);
-    box(0, -.14, -.04, .057, .17, .085, graphite);
-    for (let y = -.2; y < -.08; y += .035) box(.03, y, -.04, .003, .008, .068, black);
+    // Withdraw, bring the replacement up, seat, then work the action.
+    const mag=reload<.18?0:reload<.43?(reload-.18)/.25:reload<.65?1-(reload-.43)/.22:0;
+    box(-mag*.06, -.14-mag*.28, -.04+mag*.08, .057, .17, .085, graphite);
+    for (let y = -.2; y < -.08; y += .035) box(.03-mag*.06, y-mag*.28, -.04+mag*.08, .003, .008, .068, black);
     box(0, -.13, .09, .052, .14, .063, tan);
     box(.055, -.13, .11, .078, .105, .14, tan);
-    box(-.045, -.079, -.31, .09, .085, .13, tan);
+    box(-.045-mag*.06, -.079-mag*.3, BD.mix(-.31,.02,Math.min(1,mag*3)), .09, .085, .13, tan);
 
     // Open-window holographic optic, without the obstructing front iron post.
     const lens = this.lens;

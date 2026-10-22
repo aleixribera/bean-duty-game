@@ -31,7 +31,8 @@ for (const yaw of [0, .7, -2.2]) {
       close(dot.y, BD.RifleModel.lens.y, 'reticle stays vertically centered in the sight');
       const point = [0, 1, 2].map(i => pose[i] * dot.x + pose[4 + i] * dot.y + pose[8 + i] * dot.z + pose[12 + i]);
       const ray = rifle.shotDirection(player);
-      const view = BD.mat.view({ x: 0, y: 0, z: 0 }, yaw, BD.clamp(pitch + rifle.camera.x, -1.5, 1.5));
+      const camera = rifle.view(player);
+      const view = BD.mat.view({ x: 0, y: 0, z: 0 }, camera.yaw, camera.pitch, camera.roll);
       const local = [0, 1, 2].map(i => view[i] * ray.x + view[4 + i] * ray.y + view[8 + i] * ray.z);
       close(point[0] / -point[2], local[0] / -local[2], 'reticle matches bullet X');
       close(point[1] / -point[2], local[1] / -local[2], 'reticle matches bullet Y');

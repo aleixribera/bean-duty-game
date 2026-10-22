@@ -11,6 +11,6 @@ BD.mat = {
     const rots=[[c(rz),s(rz),0,0,-s(rz),c(rz),0,0,0,0,1,0,0,0,0,1],[c(ry),0,-s(ry),0,0,1,0,0,s(ry),0,c(ry),0,0,0,0,1],[1,0,0,0,0,c(rx),s(rx),0,0,-s(rx),c(rx),0,0,0,0,1]];
     for(const r of rots)m=this.multiply(r,m);m[12]=x;m[13]=y;m[14]=z;return m;
   },
-  view(pos,yaw,pitch){return this.multiply(this.transform(0,0,0,1,1,1,-pitch),this.multiply(this.transform(0,0,0,1,1,1,0,-yaw),this.transform(-pos.x,-pos.y,-pos.z)));}
+  view(pos,yaw,pitch,roll=0){return this.multiply(this.transform(0,0,0,1,1,1,0,0,-roll),this.multiply(this.transform(0,0,0,1,1,1,-pitch),this.multiply(this.transform(0,0,0,1,1,1,0,-yaw),this.transform(-pos.x,-pos.y,-pos.z))));}
 };
 BD.Spring=class {constructor(frequency){this.x=0;this.v=0;this.f=frequency;} kick(x,v){this.x+=x;this.v+=v;}update(dt){const f=this.f,e=Math.exp(-f*dt),c=this.v+f*this.x;this.x=(this.x+c*dt)*e;this.v=(this.v-f*c*dt)*e;return this.x;}};

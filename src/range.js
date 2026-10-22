@@ -43,7 +43,11 @@ BD.Range=class {
  this.targets=[{x:0,z:-29},{x:17,z:-17},{x:-17,z:17},{x:-3.5,z:-18,y:3.1},{x:3.5,z:18,y:3.1}].map(t=>({...t,y:t.y||0,hp:100,respawn:0,flash:0}));
  }
  reset(){for(const t of this.targets){t.hp=100;t.respawn=t.flash=0;}this.impacts=[];}
- update(dt){for(const t of this.targets){t.flash=Math.max(0,t.flash-dt);if(t.hp<=0){t.respawn-=dt;if(t.respawn<=0)t.hp=100;}}for(const p of this.impacts)p.life-=dt;this.impacts=this.impacts.filter(p=>p.life>0);}
+ update(dt){for(const t of this.targets){t.flash=Math.max(0,t.flash-dt);if(t.hp<=0){t.respawn-=dt;if(t.respawn<=0)t.hp=100;}}for(const p of this.impacts){p.life-=dt;p.x+=(p.vx||0)*dt;p.y+=(p.vy||0)*dt;p.z+=(p.vz||0)*dt;if(p.vy!==undefined)p.vy-=4*dt;}this.impacts=this.impacts.filter(p=>p.life>0);}
+ impact(origin,dir,distance,body=false){
+  for(let i=0;i<7;i++)this.impacts.push({x:origin.x+dir.x*(distance-.035),y:origin.y+dir.y*(distance-.035),z:origin.z+dir.z*(distance-.035),vx:-dir.x*.6+Math.sin(i*2.4)*.8,vy:.4+(i%3)*.3,vz:-dir.z*.6+Math.cos(i*2.4)*.8,life:.18+i*.025,size:i<3?.025:.055,color:body?[.85,.72,.5]:i<3?[1,.87,.45]:[.58,.55,.48]});
+  this.impacts=this.impacts.slice(-210);
+ }
  intersect(o,d,c,s){let near=0,far=150;for(const a of ['x','y','z']){const lo=c[a]-s[a]/2,hi=c[a]+s[a]/2;if(Math.abs(d[a])<1e-7){if(o[a]<lo||o[a]>hi)return null;continue;}let a1=(lo-o[a])/d[a],a2=(hi-o[a])/d[a];if(a1>a2)[a1,a2]=[a2,a1];near=Math.max(near,a1);far=Math.min(far,a2);if(near>far)return null;}return near;}
  shoot(origin,dir){let nearest=150,result=null;for(const b of this.solids){const n=this.intersect(origin,dir,b,{x:b.w,y:b.h,z:b.d});if(n!==null&&n<nearest)nearest=n;}
  for(const t of this.targets){if(t.hp<=0)continue;for(const part of [{y:1.75,w:.42,h:.42,head:true},{y:1.05,w:.8,h:1,head:false}]){const n=this.intersect(origin,dir,{x:t.x,y:t.y+part.y,z:t.z},{x:part.w,y:part.h,z:.28});if(n!==null&&n<nearest){nearest=n;result={target:t,head:part.head,distance:n};}}}
@@ -64,5 +68,5 @@ BD.Range=class {
  p.ground=Math.max(support,next);p.grounded=p.ground<=support+.001;if(p.grounded)p.vy=0;
  if(p.ground+p.height+.08>ceiling){p.ground=Math.max(support,ceiling-p.height-.08);p.vy=Math.min(0,p.vy);}
  }
- draw(r){if(!this.batch)this.batch=r.createBatch(this.boxes);r.drawBatch(this.batch);for(const t of this.targets){if(t.hp<=0)continue;const c=t.flash>0?[1,.9,.6]:[.72,.29,.2];r.box(t.x,t.y+1.05,t.z,.8,1,.28,c);r.box(t.x,t.y+1.75,t.z,.42,.42,.28,c);}for(const p of this.impacts)r.box(p.x,p.y,p.z,.05,.05,.05,[1,.93,.65]);}
+ draw(r){if(!this.batch)this.batch=r.createBatch(this.boxes);r.drawBatch(this.batch);for(const t of this.targets){if(t.hp<=0)continue;const c=t.flash>0?[1,.9,.6]:[.72,.29,.2];r.box(t.x,t.y+1.05,t.z,.8,1,.28,c);r.box(t.x,t.y+1.75,t.z,.42,.42,.28,c);}for(const p of this.impacts)r.box(p.x,p.y,p.z,(p.size||.05)*Math.min(1,p.life*10),(p.size||.05)*Math.min(1,p.life*10),(p.size||.05)*Math.min(1,p.life*10),p.color||[1,.93,.65]);}
 };
